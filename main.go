@@ -6,13 +6,16 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	// "encoding/json"
 )
 
+var port string = "8080"
+
 func main() {
-	getSupportedLanguage()
-	// getTranslate("Erik mencari ikan", "id", "en")
-	// randomUserData := getRandomUser()
-	// fmt.Println(randomUserData)
+	initializeRouter()
+
+	fmt.Println("Starting web server at http://localhost:" + port + "/")
+	http.ListenAndServe(":"+port, nil)
 }
 
 func getSupportedLanguage() {
