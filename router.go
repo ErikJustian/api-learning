@@ -7,4 +7,6 @@ import (
 
 func initializeRouter() {
 	http.HandleFunc("/", handlers.Home)
+
+	http.HandleFunc("/translate", handlers.Translate)
 }
