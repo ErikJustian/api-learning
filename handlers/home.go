@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -12,7 +13,7 @@ type ResponseObj struct {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	// fmt.Fprintln(w, "halo!")
+	fmt.Fprintln(w, "halo!")
 
 	w.Header().Set("Content-Type", "application/json")
 
