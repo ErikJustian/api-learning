@@ -3,25 +3,17 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"io"
+	"learning/api/models"
 	"net/http"
 	"net/url"
 )
-
-type Response struct {
-	Data struct {
-		Translations []struct {
-			TranslatedText string `json:translatedText`
-		}
-	}
-}
 
 func Translate(w http.ResponseWriter, r *http.Request) {
 	endpoint := "https://google-translate1.p.rapidapi.com/language/translate/v2"
 
 	if r.Method == "POST" {
-		var q string = "Testing"
+		var q string = r.FormValue("text")
 
 		var param = url.Values{}
 		param.Set("q", q)
@@ -38,18 +30,49 @@ func Translate(w http.ResponseWriter, r *http.Request) {
 		req.Header.Add("X-RapidAPI-Host", "google-translate1.p.rapidapi.com")
 
 		res, _ := http.DefaultClient.Do(req)
-		var responseObject Response
+		var gtTranslateRes models.GtTranslateRes
 		defer res.Body.Close()
-		body, _ := ioutil.ReadAll(res.Body)
-		fmt.Println(string(body))
 
-		json.Unmarshal(body, &responseObject)
+		body, _ := io.ReadAll(res.Body)
 
-		returnValue, err := json.Marshal(responseObject)
+		// fmt.Println(string(body))
+
+		var unmarshalErr error = json.Unmarshal(body, &gtTranslateRes)
+
+		if unmarshalErr != nil {
+			http.Error(w, unmarshalErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Create our own response object to return.
+		var response models.TranslateRes
+
+		if len(gtTranslateRes.Data.Translations) > 0 {
+			for i := 0; i < len(gtTranslateRes.Data.Translations); i++ {
+				var translatedTxt string = gtTranslateRes.Data.Translations[i].TranslatedText
+
+				if translatedTxt != "" {
+					response.Status = 1
+					response.Message = "Text translated successfully."
+					response.Val = translatedTxt
+				} else {
+					response.Status = 0
+					response.Message = "No word to be translated."
+					response.Val = ""
+				}
+			}
+		} else {
+			response.Status = 0
+			response.Message = "No results from Google Translate API."
+			response.Val = ""
+		}
+
+		returnValue, err := json.Marshal(response)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		// fmt.Println(res)
 		// fmt.Println(string(body))
 		// respone, err := json.Marshal(string(body))
@@ -58,6 +81,7 @@ func Translate(w http.ResponseWriter, r *http.Request) {
 		// 	return
 		// }
 		// translation := body[];
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(returnValue)
 	}
